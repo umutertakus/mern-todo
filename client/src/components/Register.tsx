@@ -1,5 +1,11 @@
 import styled from "styled-components";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import LoadingButton from "./LoadingButton";
+import { ChangeEvent, useEffect, useState } from "react";
+import { IUserInfo } from "../types/interfaces";
+import { api } from "../utils/api";
+import { useToast } from "../hooks/useToast";
 
 const AuthCard = styled.div`
   height: 400px;
@@ -41,18 +47,74 @@ const Input = styled.input`
 `;
 
 const Register = () => {
+  const { showToast } = useToast();
+  const [userInfo, setUserInfo] = useState<IUserInfo>({
+    fullName: "",
+    username: "",
+    password: "",
+  });
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    const { name, value } = event.target;
+    setUserInfo((prev: IUserInfo) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const allValuesExist = (obj: { [key: string]: any }): boolean => {
+    for (const key in obj) {
+      if (obj[key] === "") {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const handleClick = async (): Promise<void> => {
+    if (allValuesExist(userInfo)) {
+      setIsLoading(true);
+      try {
+        const response = await api.post("/auth/register", userInfo);
+        showToast(response.data.message, "success");
+      } catch (err: any) {
+        showToast(err.response.data.message, "error");
+      }
+      setIsLoading(false);
+    } else {
+      showToast("All fields must be filled.", "error");
+    }
+  };
+
   return (
     <AuthCard>
       <Title>Create an account</Title>
       <FormContainer>
         <Label htmlFor="fullName">Full Name</Label>
-        <Input />
+        <Input
+          name="fullName"
+          value={userInfo.fullName}
+          onChange={handleChange}
+        />
         <Label htmlFor="username">Username</Label>
-        <Input />
+        <Input
+          name="username"
+          value={userInfo.username}
+          onChange={handleChange}
+        />
         <Label htmlFor="password">Password</Label>
-        <Input type="password" />
-        <LoadingButton>Register</LoadingButton>
+        <Input
+          name="password"
+          type="password"
+          value={userInfo.password}
+          onChange={handleChange}
+        />
+        <LoadingButton onClick={handleClick} isLoading={isLoading}>
+          Register
+        </LoadingButton>
       </FormContainer>
+      <ToastContainer />
     </AuthCard>
   );
 };
