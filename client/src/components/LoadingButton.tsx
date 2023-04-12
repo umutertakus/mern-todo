@@ -11,7 +11,7 @@ const Button = styled.button<ButtonProps>`
   justify-content: center;
   align-items: center;
   gap: 10px;
-  margin-top: 24px;
+  margin-top: 16px;
   border: none;
   border-radius: 16px;
   background-color: #4051e9;

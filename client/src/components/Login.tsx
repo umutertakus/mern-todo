@@ -1,14 +1,13 @@
-import styled from "styled-components";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import LoadingButton from "./LoadingButton";
-import { ChangeEvent, FC, useEffect, useState } from "react";
-import { IUserInfo } from "../types/interfaces";
-import { api } from "../utils/api";
+import { ChangeEvent, FC, useState } from "react";
 import { useToast } from "../hooks/useToast";
+import styled from "styled-components";
+import LoadingButton from "./LoadingButton";
+import { ILoginUserInfo } from "../types/interfaces";
+import { ToastContainer } from "react-toastify";
+import { api } from "../utils/api";
 
 const AuthCard = styled.div`
-  height: 400px;
+  height: 320px;
   width: 400px;
   background-color: aliceblue;
   border-radius: 16px;
@@ -58,10 +57,9 @@ interface Props {
   setIsLoginPage: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const Register: FC<Props> = ({ setIsLoginPage }) => {
+const Login: FC<Props> = ({ setIsLoginPage }) => {
   const { showToast } = useToast();
-  const [userInfo, setUserInfo] = useState<IUserInfo>({
-    fullName: "",
+  const [userInfo, setUserInfo] = useState<ILoginUserInfo>({
     username: "",
     password: "",
   });
@@ -69,7 +67,7 @@ const Register: FC<Props> = ({ setIsLoginPage }) => {
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = event.target;
-    setUserInfo((prev: IUserInfo) => ({
+    setUserInfo((prev: ILoginUserInfo) => ({
       ...prev,
       [name]: value,
     }));
@@ -88,8 +86,8 @@ const Register: FC<Props> = ({ setIsLoginPage }) => {
     if (allValuesExist(userInfo)) {
       setIsLoading(true);
       try {
-        const response = await api.post("/auth/register", userInfo);
-        showToast(response.data.message, "success");
+        await api.post("/auth/login", userInfo);
+        showToast("Login successful.", "success");
       } catch (err: any) {
         showToast(err.response.data.message, "error");
       }
@@ -105,14 +103,8 @@ const Register: FC<Props> = ({ setIsLoginPage }) => {
 
   return (
     <AuthCard>
-      <Title>Create an account</Title>
+      <Title>Login to your account</Title>
       <FormContainer>
-        <Label htmlFor="fullName">Full Name</Label>
-        <Input
-          name="fullName"
-          value={userInfo.fullName}
-          onChange={handleChange}
-        />
         <Label htmlFor="username">Username</Label>
         <Input
           name="username"
@@ -127,11 +119,11 @@ const Register: FC<Props> = ({ setIsLoginPage }) => {
           onChange={handleChange}
         />
         <LoadingButton onClick={handleClick} isLoading={isLoading}>
-          Register
+          Login
         </LoadingButton>
         <div>
           <CheckAccount onClick={switchPageType}>
-            Do you have an account?
+            Don't you have an account?
           </CheckAccount>
         </div>
       </FormContainer>
@@ -140,4 +132,4 @@ const Register: FC<Props> = ({ setIsLoginPage }) => {
   );
 };
 
-export default Register;
+export default Login;
