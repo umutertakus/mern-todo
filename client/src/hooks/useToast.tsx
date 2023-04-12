@@ -10,6 +10,7 @@ interface IToastType {
 const defaultOptions: ToastOptions = {
   position: "top-center",
   autoClose: 2000,
+  hideProgressBar: true,
 };
 
 export const useToast = (): IToastType => {
