@@ -9,7 +9,7 @@ dotenv.config();
 const router = express.Router();
 
 router.post("/register", async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, fullName } = req.body;
 
   const user = await UserModel.findOne({ username });
 
@@ -19,7 +19,11 @@ router.post("/register", async (req, res) => {
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  const newUser = new UserModel({ username, password: hashedPassword });
+  const newUser = new UserModel({
+    fullName,
+    username,
+    password: hashedPassword,
+  });
   await newUser.save();
 
   res.status(201).json({ message: "User registered successfully." });
@@ -43,7 +47,7 @@ router.post("/login", async (req, res) => {
   }
 
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET_KEY);
-  res.status(200).json({ token, userId: user._id });
+  res.status(200).json({ token, userId: user._id, fullName: user.fullName });
 });
 
 export { router as userRouter };
