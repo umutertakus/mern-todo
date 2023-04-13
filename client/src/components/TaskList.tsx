@@ -1,4 +1,4 @@
-import { ChangeEvent, FC, useEffect, useState } from "react";
+import { ChangeEvent, FC, KeyboardEvent, useEffect, useState } from "react";
 import styled from "styled-components";
 import { api } from "../utils/api";
 import { useGlobal } from "../context/GlobalContext";
@@ -34,13 +34,22 @@ const AddInput = styled.input`
   }
 `;
 
+const TasksContainer = styled.div`
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  padding-top: 16px;
+`;
+
 interface IButtonProps {
   bgColor: string;
   isDisabled?: boolean;
+  height?: string;
 }
 
 const Button = styled.button<IButtonProps>`
-  height: 50px;
+  height: ${(props) => props.height || "50px"};
   flex: 1;
   border: none;
   border-radius: 8px;
@@ -62,12 +71,11 @@ const Button = styled.button<IButtonProps>`
 
 const TodoInput = styled.input`
   height: 30px;
-  width: calc(100% - 30px);
+  width: calc(85% - 30px);
   border-radius: 8px;
   outline: none;
   border: 1px solid lightgray;
   padding: 0px 15px;
-  margin-top: 16px;
   font-size: 16px;
   &:focus {
     outline: 1px solid black;
@@ -114,7 +122,6 @@ const TaskList: FC<Props> = ({ selectedTab }) => {
   };
 
   const addTodo = async (): Promise<void> => {
-    let a: string = "a";
     if (currentTodo !== "") {
       try {
         const requestBody = {
@@ -134,6 +141,28 @@ const TaskList: FC<Props> = ({ selectedTab }) => {
     }
   };
 
+  const updateTodo = async (index: number): Promise<void> => {
+    if (todos[index].content !== "") {
+      try {
+        const requestBody = {
+          todoId: todos[index].todoId,
+          content: todos[index].content,
+          completed: todos[index].completed,
+        };
+        const response = await api.put("/todo/updateTodo", requestBody);
+        const updatedTodo: any = changeMongoIds(response.data, "todoId");
+        const newTodos = todos;
+        newTodos[index] = updatedTodo[0];
+        getFilteredTodos(newTodos);
+        showToast("Task updated successfully.", "success");
+      } catch (err) {
+        console.error(err);
+      }
+    } else {
+      showToast("Task field cannot be empty.", "error");
+    }
+  };
+
   const handleCurrentTodoChange = (
     event: ChangeEvent<HTMLInputElement>
   ): void => {
@@ -142,6 +171,34 @@ const TaskList: FC<Props> = ({ selectedTab }) => {
 
   const clearCurrentTodo = (): void => {
     setCurrentTodo("");
+  };
+
+  const handleTodoChange = (
+    event: ChangeEvent<HTMLInputElement>,
+    index: number
+  ): void => {
+    const newTodos = [...todos];
+    newTodos[index].content = event.target.value;
+    setTodos(newTodos);
+  };
+
+  const handleKeyDown = (
+    event: KeyboardEvent<HTMLInputElement>,
+    index: number
+  ): void => {
+    if (event.key === "Enter") {
+      updateTodo(index);
+    }
+  };
+
+  const deleteTodo = async (todoId: string): Promise<void> => {
+    try {
+      const response = await api.delete(`/todo/deleteTodo/${todoId}`);
+      setTodos((prev) => prev.filter((todo) => todo.todoId !== response.data));
+      showToast("Task deleted successfully.", "success");
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   useEffect(() => {
@@ -159,8 +216,22 @@ const TaskList: FC<Props> = ({ selectedTab }) => {
           Clear
         </Button>
       </AddInputContainer>
-      {todos.map((todo: ITodos) => (
-        <TodoInput key={todo.todoId} value={todo.content} />
+      {todos.map((todo: ITodos, index: number) => (
+        <TasksContainer>
+          <TodoInput
+            key={todo.todoId}
+            value={todo.content}
+            onChange={(event) => handleTodoChange(event, index)}
+            onKeyDown={(event) => handleKeyDown(event, index)}
+          />
+          <Button
+            bgColor="#d31111"
+            height="30px"
+            onClick={() => deleteTodo(todo.todoId)}
+          >
+            Delete
+          </Button>
+        </TasksContainer>
       ))}
       <ToastContainer />
     </Container>

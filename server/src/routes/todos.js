@@ -46,7 +46,7 @@ router.put("/updateTodo", async (req, res) => {
     todo.completed = completed;
     await todo.save();
 
-    res.status(200).json(todo);
+    res.status(200).json([todo]);
   } catch (err) {
     res.status(500).json(err);
   }
