@@ -5,6 +5,8 @@ import LoadingButton from "./LoadingButton";
 import { ILoginUserInfo } from "../types/interfaces";
 import { ToastContainer } from "react-toastify";
 import { api } from "../utils/api";
+import { useNavigate } from "react-router-dom";
+import { useGlobal } from "../context/GlobalContext";
 
 const AuthCard = styled.div`
   height: 320px;
@@ -59,6 +61,8 @@ interface Props {
 
 const Login: FC<Props> = ({ setIsLoginPage }) => {
   const { showToast } = useToast();
+  const { setUserId } = useGlobal();
+  const navigate = useNavigate();
   const [userInfo, setUserInfo] = useState<ILoginUserInfo>({
     username: "",
     password: "",
@@ -86,8 +90,15 @@ const Login: FC<Props> = ({ setIsLoginPage }) => {
     if (allValuesExist(userInfo)) {
       setIsLoading(true);
       try {
-        await api.post("/auth/login", userInfo);
+        const response = await api.post("/auth/login", userInfo);
+        const user = response.data;
+        const userId = user.userId;
+        localStorage.setItem("token", user.token);
+        localStorage.setItem("fullName", user.fullName);
+        localStorage.setItem("userId", userId);
+        setUserId(userId);
         showToast("Login successful.", "success");
+        navigate("/");
       } catch (err: any) {
         showToast(err.response.data.message, "error");
       }
