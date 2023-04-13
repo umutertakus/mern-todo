@@ -1,5 +1,6 @@
 import { useState } from "react";
 import styled from "styled-components";
+import TaskList from "./TaskList";
 
 const Container = styled.div`
   height: 100vh;
@@ -98,6 +99,7 @@ const Home = () => {
           </Tab>
         </TabContainer>
         <Input />
+        <TaskList selectedTab={selectedTab} />
       </Card>
     </Container>
   );
