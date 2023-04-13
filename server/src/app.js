@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import process from "process";
 
 import { userRouter } from "./routes/users.js";
+import { todoRouter } from "./routes/todos.js";
 
 dotenv.config();
 const app = express();
@@ -13,6 +14,7 @@ app.use(express.json());
 app.use(cors());
 
 app.use("/auth", userRouter);
+app.use("/todo", todoRouter);
 
 const { MONGO_USERNAME, MONGO_PASSWORD, PORT } = process.env;
 
