@@ -30,20 +30,6 @@ const Card = styled.div`
   width: 600px;
 `;
 
-const Input = styled.input`
-  height: 50px;
-  border-radius: 8px;
-  outline: none;
-  border: 1px solid lightgray;
-  padding: 0px 15px;
-  margin-top: 8px;
-  font-size: 24px;
-  &:focus {
-    outline: 1px solid whitesmoke;
-    box-shadow: 5px 5px 10px rgba(186, 191, 222, 0.2);
-  }
-`;
-
 const TabContainer = styled.div`
   display: flex;
   gap: 24px;
@@ -98,7 +84,6 @@ const Home = () => {
             Completed
           </Tab>
         </TabContainer>
-        <Input />
         <TaskList selectedTab={selectedTab} />
       </Card>
     </Container>

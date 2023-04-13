@@ -1,15 +1,66 @@
-import { FC, useEffect, useState } from "react";
+import { ChangeEvent, FC, useEffect, useState } from "react";
 import styled from "styled-components";
 import { api } from "../utils/api";
 import { useGlobal } from "../context/GlobalContext";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { ITodos } from "../types/interfaces";
+import { useToast } from "../hooks/useToast";
+import { ToastContainer } from "react-toastify";
+import { changeMongoIds } from "../utils/helpers.js";
 
 const Container = styled.div`
   width: 600px;
 `;
 
-const Input = styled.input`
+const AddInputContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  padding-top: 8px;
+`;
+
+const AddInput = styled.input`
+  height: 50px;
+  width: calc(65% - 30px);
+  border-radius: 8px;
+  outline: none;
+  border: 1px solid lightgray;
+  padding: 0px 15px;
+  font-size: 24px;
+  &:focus {
+    outline: 1px solid whitesmoke;
+    box-shadow: 5px 5px 10px rgba(186, 191, 222, 0.2);
+  }
+`;
+
+interface IButtonProps {
+  bgColor: string;
+  isDisabled?: boolean;
+}
+
+const Button = styled.button<IButtonProps>`
+  height: 50px;
+  flex: 1;
+  border: none;
+  border-radius: 8px;
+  background-color: ${(props) => props.bgColor};
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  &:hover {
+    opacity: ${(props) => (props.isDisabled ? 1 : 0.9)};
+  }
+  &:active {
+    opacity: ${(props) => (props.isDisabled ? 1 : 0.7)};
+  }
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.3;
+  }
+`;
+
+const TodoInput = styled.input`
   height: 30px;
   width: calc(100% - 30px);
   border-radius: 8px;
@@ -31,8 +82,10 @@ interface Props {
 const TaskList: FC<Props> = ({ selectedTab }) => {
   const { userId } = useGlobal();
   const [animationParent] = useAutoAnimate();
+  const { showToast } = useToast();
 
   const [todos, setTodos] = useState<ITodos[]>([]);
+  const [currentTodo, setCurrentTodo] = useState<string>("");
 
   const getFilteredTodos = (updatedTodos: any): void => {
     if (selectedTab === 1) {
@@ -53,18 +106,42 @@ const TaskList: FC<Props> = ({ selectedTab }) => {
   const fetchTodos = async (): Promise<void> => {
     try {
       const response = await api.get(`/todo/getTodos/${userId}`);
-      const updatedTodos: any = [];
-      response.data.forEach((todo: any) => {
-        const { _id, ...rest } = todo;
-        updatedTodos.push({
-          todoId: _id,
-          ...rest,
-        });
-      });
+      const updatedTodos = changeMongoIds(response.data, "todoId");
       getFilteredTodos(updatedTodos);
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const addTodo = async (): Promise<void> => {
+    let a: string = "a";
+    if (currentTodo !== "") {
+      try {
+        const requestBody = {
+          content: currentTodo,
+          completed: false,
+          owner: userId,
+        };
+        const response = await api.post("/todo/addTodo", requestBody);
+        const updatedTodo: any = changeMongoIds(response.data, "todoId");
+        setTodos((prev) => [...prev, ...updatedTodo]);
+        setCurrentTodo("");
+      } catch (err) {
+        console.error(err);
+      }
+    } else {
+      showToast("Task field cannot be empty.", "error");
+    }
+  };
+
+  const handleCurrentTodoChange = (
+    event: ChangeEvent<HTMLInputElement>
+  ): void => {
+    setCurrentTodo(event.target.value);
+  };
+
+  const clearCurrentTodo = (): void => {
+    setCurrentTodo("");
   };
 
   useEffect(() => {
@@ -73,9 +150,19 @@ const TaskList: FC<Props> = ({ selectedTab }) => {
 
   return (
     <Container ref={animationParent}>
-      {todos.map((todo: ITodos, index: number) => (
-        <Input key={index} value={todo.content} />
+      <AddInputContainer>
+        <AddInput value={currentTodo} onChange={handleCurrentTodoChange} />
+        <Button bgColor="#6d6f05" onClick={addTodo}>
+          Add
+        </Button>
+        <Button bgColor="#d31111" onClick={clearCurrentTodo}>
+          Clear
+        </Button>
+      </AddInputContainer>
+      {todos.map((todo: ITodos) => (
+        <TodoInput key={todo.todoId} value={todo.content} />
       ))}
+      <ToastContainer />
     </Container>
   );
 };
